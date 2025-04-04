@@ -1,0 +1,384 @@
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Open Sans", serif;
+    scroll-behavior: smooth;
+    user-select: none;
+}
+
+body{
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+:root {
+    --white-color: #fff;
+    --black-color: #000;
+    --light-white-color: #f0f0f0;
+    --light-gray-color: #e5e5e5;
+    --border-color: #d4d4d4;
+    --primary-color: #141619;
+    --secondary-color: #2C2E3A;
+    --third-color: #050A44;
+    --fourth-color: #0A21C0;
+    --fifth-color: #B3B4BD;
+    --overlay-dark-color: rgba(0, 0, 0, 0.6);
+}
+
+.navbar :where(.logo-image, .user-image) {
+    width: 32px;
+    cursor: pointer;
+    border-radius: 50%;
+}
+
+.navbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 1rem;
+}
+
+.navbar :where(.nav-section, .search-form, .nav-logo) {
+    display: flex;
+    align-items: center;
+}
+
+.navbar .nav-section {
+    gap: 1rem;
+}
+
+.navbar .nav-logo {
+    text-decoration: none;
+    display: flex;
+    gap: 0.5rem;
+}
+
+.navbar .nav-logo .logo-text {
+    font-size: 1.25rem;
+    color: var(--black-color);
+}
+
+.navbar .nav-button {
+    border: none;
+    cursor: pointer;
+    height: 40px;
+    width: 40px;
+    border-radius: 50%;
+    background-color: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.navbar .nav-button i {
+    font-size: 1.5rem;
+}
+
+.navbar .nav-button:hover {
+    background-color: var(--light-gray-color);
+}
+
+.navbar .search-form .search-input {
+    width: 100%;
+    height: 100%;
+    padding: 0 1rem;
+    outline: none;
+    font-size: 1rem;
+    border-radius: 3.1rem 0 0 3.1rem;
+    border: 1px solid var(--border-color);
+}
+
+.navbar .nav-center {
+    display: flex;
+    width: 100%;
+    justify-content: center;
+}
+
+.navbar .search-form {
+    max-width: 550px;
+    flex: 1;
+    height: 40px;
+}
+
+.navbar .search-form .search-button {
+    width: auto !important;
+    padding: 0 1.25rem !important;
+    border-radius: 0 3.1rem 3.1rem 0 !important;
+    border: 1px solid var(--border-color) !important;
+    border-left: 0 !important;
+}
+
+.main-layout {
+    display: flex;
+}
+
+.main-layout .sidebar {
+    width: 240px;
+    padding: 1rem;
+    background-color: var(--light-white-color);
+    min-height: calc(100vh - 60px);
+}
+
+.main-layout .content-wrapper {
+    display: flex;
+    flex-direction: column;
+    padding: 0 1rem;
+    overflow-x: hidden;
+    flex: 1;
+}
+
+.category-container {
+    position: relative;
+    width: 100%;
+    overflow-x: hidden;
+    margin-bottom: 1rem;
+}
+
+.category-list {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.5rem 0;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch; /* For smooth scrolling on iOS */
+    scrollbar-width: none; /* Hide scrollbar for Firefox */
+}
+
+.category-list::-webkit-scrollbar {
+    display: none; /* Hide scrollbar for Chrome/Safari */
+}
+
+.category-button {
+    flex: 0 0 auto;
+    padding: 0.5rem 1rem;
+    border-radius: 2rem;
+    border: none;
+    background-color: #f2f2f2;
+    cursor: pointer;
+    white-space: nowrap;
+    font-size: 0.9rem;
+    transition: background-color 0.3s;
+}
+
+.category-button:hover {
+    background-color: #e5e5e5;
+}
+
+/* For dark theme */
+.dark .category-button {
+    background-color: #3d3d3d;
+    color: #fff;
+}
+
+.dark .category-button:hover {
+    background-color: #4d4d4d;
+}
+
+/* Navigation arrows (optional) */
+.category-nav {
+    display: none;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 40px;
+    background-color: rgba(255, 255, 255, 0.8);
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    z-index: 1;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.category-nav.left {
+    left: 10px;
+}
+
+.category-nav.right {
+    right: 10px;
+}
+
+/* Show arrows on larger screens */
+@media (min-width: 768px) {
+    .category-nav {
+        display: flex;
+    }
+}
+
+.category-list .category-button {
+    border: none;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    white-space: nowrap;
+    padding: 0.4rem 0.75rem;
+    border-radius: 0.5rem;
+    background: var(--light-gray-color);
+}
+
+.category-list .category-button:hover {
+    background-color: var(--border-color);
+}
+
+.video-list {
+    margin-top: 1rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+.video-list .video-card {
+    text-decoration: none;
+    display: flex;
+    flex-direction: column;
+}
+
+.thumbinal-container {
+    position: relative;
+    overflow: hidden;
+}
+
+.video-list .video-card .thumbinal {
+    width: 100%;
+    border-radius: 0.5rem;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.video-card:hover .thumbinal {
+    transform: scale(1.05);
+}
+
+.video-list .video-card .icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+}
+
+.video-list .video-card .title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--black-color);
+    margin-top: 0.25rem;
+}
+
+.video-list .video-card p {
+    font-size: 0.875rem;
+    color: var(--secondary-color);
+}
+
+.video-list .video-card .channel-name {
+    margin: 0.25rem 0 0.15rem;
+}
+
+.video-list .video-card .duration {
+    position: absolute;
+    right: 0.65rem;
+    bottom: 0.8rem;
+    background-color: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-size: 0.8rem;
+}
+
+.video-info {
+    display: flex;
+    gap: 0.7rem;
+    padding: 0.7rem 0 0.5rem;
+    align-items: flex-start;
+}
+
+.video-details {
+    flex: 1;
+}
+.video-list .video-card .thumbinal-container {
+    position: relative;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+    .main-layout .sidebar {
+        display: none;
+    }
+    
+    .navbar .nav-logo .logo-text {
+        display: none;
+    }
+    
+    .navbar .nav-center {
+        max-width: 60%;
+    }
+}
+
+@media (max-width: 576px) {
+    .video-list {
+        grid-template-columns: 1fr;
+    }
+    
+    .navbar .nav-center {
+        max-width: 50%;
+    }
+    
+    .navbar .search-form .search-input {
+        padding: 0 0.5rem;
+    }
+    
+    .navbar .search-form .search-button {
+        padding: 0 0.75rem !important;
+    }
+}
+
+/* Fix for category list scrollbar */
+.content-wrapper .category-list::-webkit-scrollbar {
+    display: none;
+}
+/* Dark mode styles */
+.dark {
+    background-color: #0f0f0f;
+    color: #f1f1f1;
+}
+
+.dark .sidebar {
+    background-color: #0f0f0f;
+    color: #f1f1f1;
+}
+
+.dark .navbar {
+    background-color: #0f0f0f;
+    border-bottom: 1px solid #303030;
+}
+
+.dark .search-input {
+    background-color: #121212;
+    color: #f1f1f1;
+    border: 1px solid #303030;
+}
+
+.dark .video-card {
+    background-color: transparent;
+    color: #f1f1f1;
+}
+
+.dark .video-card:hover {
+    background-color: #272727;
+}
+
+.dark .duration {
+    background-color: rgba(0, 0, 0, 0.8);
+}
+
+/* Add more dark mode styles as needed for other elements */
+.dark .category-button {
+    background-color: #3d3d3d;
+    color: #fff;
+}
+
+.dark .thumbinal {
+    filter: brightness(0.8);
+}
