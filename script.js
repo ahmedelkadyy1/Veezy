@@ -1,61 +1,41 @@
-// Wait for DOM to load
+// Track viewed videos in localStorage to prevent duplicate counts
+const viewedVideos = JSON.parse(localStorage.getItem('viewedVideos') || '[]');
+
 document.addEventListener('DOMContentLoaded', async () => {
     await loadVideos();
+    setupVideoClickTracking();
 });
 
-// Main function to load videos from backend
 async function loadVideos() {
     try {
         const response = await fetch('https://veezy-backend.onrender.com/videos');
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
         const videos = await response.json();
         renderVideos(videos);
     } catch (error) {
         console.error('Failed to load videos:', error);
-        // Fallback to default videos if API fails
-        renderVideos({
-            1: {
-                views: 0,
-                uploadTime: new Date().toISOString(),
-                title: "Blanx an E-commerce Website"
-            },
-            2: {
-                views: 0,
-                uploadTime: new Date().toISOString(),
-                title: "WatchNest a Movie Website"
-            }
-        });
+        renderVideos(getFallbackVideos());
     }
 }
 
-// Render videos to the page
 function renderVideos(videos) {
-    const videoListContainer = document.getElementById('video-list-container');
-    videoListContainer.innerHTML = ''; // Clear existing content
-
+    const container = document.getElementById('video-list-container');
+    container.innerHTML = '';
+    
     Object.entries(videos).forEach(([id, video]) => {
-        const videoCard = createVideoCard(id, video);
-        videoListContainer.appendChild(videoCard);
+        const card = createVideoCard(id, video);
+        container.appendChild(card);
     });
 }
 
-// Create individual video card element
 function createVideoCard(id, video) {
-    const videoCard = document.createElement('a');
-    videoCard.href = `watch.html?id=${id}`;
-    videoCard.className = 'video-card';
-    videoCard.dataset.videoId = id;
+    const card = document.createElement('a');
+    card.href = `#`; // Temporary - we'll handle clicks via JavaScript
+    card.className = 'video-card';
+    card.dataset.videoId = id;
 
-    const timeAgo = formatTimeAgo(video.uploadTime);
-    const thumbnail = id === '1' ? 'blanx-thumbinal.png' : 'watchnest-thumbinal.png';
-
-    videoCard.innerHTML = `
+    card.innerHTML = `
         <div class="thumbinal-container">
-            <img src="imgs/${thumbnail}" class="thumbinal">
+            <img src="imgs/${id === '1' ? 'blanx-thumbinal.png' : 'watchnest-thumbinal.png'}" class="thumbinal">
             <p class="duration">00:56</p>
         </div>
         <div class="video-info">
@@ -64,37 +44,57 @@ function createVideoCard(id, video) {
         <div class="video-details">
             <h2 class="title">${video.title || `Video ${id}`}</h2>
             <p class="channel-name">Ahmed Megahed</p>
-            <p class="views">${video.views} Views • ${timeAgo}</p>
+            <p class="views">${video.views} Views • ${formatTimeAgo(video.uploadTime)}</p>
         </div>
     `;
 
-    return videoCard;
+    return card;
 }
 
-// Format timestamp to "X time ago" format
-function formatTimeAgo(timestamp) {
-    const now = new Date();
-    const date = new Date(timestamp);
-    const seconds = Math.floor((now - date) / 1000);
+// ======== NEW: VIEW COUNT TRACKING ======== //
+function setupVideoClickTracking() {
+    document.querySelectorAll('.video-card').forEach(card => {
+        card.addEventListener('click', async (e) => {
+            e.preventDefault();
+            const videoId = card.dataset.videoId;
 
-    const intervals = {
-        year: 31536000,
-        month: 2592000,
-        week: 604800,
-        day: 86400,
-        hour: 3600,
-        minute: 60
-    };
+            // Only count if not viewed before
+            if (!viewedVideos.includes(videoId)) {
+                await incrementViewCount(videoId);
+                viewedVideos.push(videoId);
+                localStorage.setItem('viewedVideos', JSON.stringify(viewedVideos));
+                loadVideos(); // Refresh the view counts
+            }
 
-    for (const [unit, secondsInUnit] of Object.entries(intervals)) {
-        const interval = Math.floor(seconds / secondsInUnit);
-        if (interval >= 1) {
-            return `${interval} ${unit}${interval === 1 ? '' : 's'} ago`;
-        }
+            // Redirect to watch page (you'll need to implement this)
+            window.location.href = `watch.html?id=${videoId}`;
+        });
+    });
+}
+
+async function incrementViewCount(videoId) {
+    try {
+        const response = await fetch(
+            `https://veezy-backend.onrender.com/videos/${videoId}/view`, 
+            { method: 'POST' }
+        );
+        
+        if (!response.ok) throw new Error('Failed to increment views');
+        return await response.json();
+    } catch (error) {
+        console.error('Error incrementing views:', error);
     }
+}
+// ======== END OF NEW CODE ======== //
 
-    return 'Just now';
+// Helper functions
+function formatTimeAgo(timestamp) {
+    // ... (keep existing time formatting code) ...
 }
 
-// Optional: Auto-refresh every 30 seconds
-setInterval(loadVideos, 30000);
+function getFallbackVideos() {
+    return {
+        1: { views: 0, uploadTime: new Date().toISOString(), title: "Blanx an E-commerce Website" },
+        2: { views: 0, uploadTime: new Date().toISOString(), title: "WatchNest a Movie Website" }
+    };
+}
