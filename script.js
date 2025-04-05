@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Theme Switcher Functionality (unchanged)
+    // ... keep your existing theme and category code ...
     const themeButton = document.querySelector('.theme-button');
     if (themeButton) {
         const icon = themeButton.querySelector('i');
@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Category Slider Navigation (unchanged)
+    // Category Slider Navigation
     const categoryList = document.querySelector('.category-list');
     if (categoryList) {
         const leftNav = document.createElement('button');
@@ -69,47 +69,44 @@ document.addEventListener('DOMContentLoaded', function() {
         checkNavButtons();
     }
 
-    // Updated Video View Tracking System (now connects to backend)
+    // Video Data System
     const videoCards = document.querySelectorAll('.video-card');
     if (videoCards.length > 0) {
-        // Base URL for your backend API
-        const API_BASE_URL = 'http://localhost:3001/videos';
+        const API_BASE_URL = window.location.hostname === 'localhost' 
+            ? 'http://localhost:3001' 
+            : 'https://veezy-backend.onrender.com';
 
-        // Fetch video data from backend
-        async function fetchVideoData(videoId) {
+        async function fetchAllVideos() {
             try {
-                const response = await fetch(`${API_BASE_URL}/${videoId}`);
-                if (!response.ok) throw new Error('Network error');
+                const response = await fetch(`${API_BASE_URL}/videos`, {
+                    headers: { 'Cache-Control': 'no-cache' }
+                });
                 return await response.json();
             } catch (error) {
-                console.error('Failed to fetch video data:', error);
-                return { views: 0, uploadTime: new Date().toISOString() }; // Fallback
+                console.error('Failed to fetch videos:', error);
+                return {};
             }
         }
 
-        // Increment views on backend
         async function incrementViews(videoId) {
             try {
-                const response = await fetch(`${API_BASE_URL}/${videoId}/view`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                await fetch(`${API_BASE_URL}/videos/${videoId}/view`, {
+                    method: 'POST'
                 });
-                if (!response.ok) throw new Error('Failed to update views');
             } catch (error) {
                 console.error('Error incrementing views:', error);
             }
         }
 
-        // Format time (e.g., "2 days ago")
         function formatTimeAgo(uploadTime) {
-            const seconds = Math.floor(new Date() - new Date(uploadTime)) / 1000;
+            const seconds = Math.floor((new Date() - new Date(uploadTime)) / 1000);
             const intervals = {
                 year: 31536000,
                 month: 2592000,
                 week: 604800,
                 day: 86400,
                 hour: 3600,
-                minute: 60,
+                minute: 60
             };
 
             for (const [unit, secondsInUnit] of Object.entries(intervals)) {
@@ -121,24 +118,35 @@ document.addEventListener('DOMContentLoaded', function() {
             return 'just now';
         }
 
-        // Process each video card
-        videoCards.forEach(async (card, index) => {
-            const videoId = index + 1; // Simple ID system (1, 2, 3...)
-            const viewsElement = card.querySelector('.views');
-            const videoTitle = card.querySelector('.title').textContent;
-
-            // Load initial data
-            const videoData = await fetchVideoData(videoId);
-            viewsElement.textContent = `${videoData.views} Views • ${formatTimeAgo(videoData.uploadTime)}`;
-
-            // Handle clicks
-            card.addEventListener('click', async (e) => {
-                e.preventDefault();
-                await incrementViews(videoId); // Update backend
-                const updatedData = await fetchVideoData(videoId); // Refresh data
-                viewsElement.textContent = `${updatedData.views} Views • ${formatTimeAgo(updatedData.uploadTime)}`;
-                window.location.href = `${videoTitle.replace(/\s+/g, '-').toLowerCase()}.html`;
+        async function initializeVideos() {
+            const allVideos = await fetchAllVideos();
+            
+            videoCards.forEach(card => {
+                const videoId = card.dataset.videoId;
+                const videoData = allVideos[videoId] || { 
+                    views: 0, 
+                    uploadTime: new Date().toISOString() 
+                };
+                
+                const viewsElement = card.querySelector('.views');
+                viewsElement.textContent = 
+                    `${videoData.views} Views • ${formatTimeAgo(videoData.uploadTime)}`;
+                
+                card.addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    await incrementViews(videoId);
+                    // Update the UI immediately (optimistic update)
+                    const newCount = videoData.views + 1;
+                    viewsElement.textContent = 
+                        `${newCount} Views • ${formatTimeAgo(videoData.uploadTime)}`;
+                    // Navigate
+                    window.location.href = card.querySelector('.title').textContent
+                        .replace(/\s+/g, '-')
+                        .toLowerCase() + '.html';
+                });
             });
-        });
+        }
+
+        initializeVideos();
     }
 });
