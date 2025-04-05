@@ -43,10 +43,9 @@ function renderVideos(videos) {
     });
 }
 
-// Create individual video card element
+// Create individual video card element with click handler
 function createVideoCard(id, video) {
-    const videoCard = document.createElement('a');
-    videoCard.href = `watch.html?id=${id}`;
+    const videoCard = document.createElement('div');
     videoCard.className = 'video-card';
     videoCard.dataset.videoId = id;
 
@@ -54,21 +53,62 @@ function createVideoCard(id, video) {
     const thumbnail = id === '1' ? 'blanx-thumbinal.png' : 'watchnest-thumbinal.png';
 
     videoCard.innerHTML = `
-        <div class="thumbinal-container">
-            <img src="imgs/${thumbnail}" class="thumbinal">
-            <p class="duration">00:56</p>
-        </div>
-        <div class="video-info">
-            <img src="imgs/icon-big.png" class="icon">
-        </div>
-        <div class="video-details">
-            <h2 class="title">${video.title || `Video ${id}`}</h2>
-            <p class="channel-name">Ahmed Megahed</p>
-            <p class="views">${video.views} Views • ${timeAgo}</p>
-        </div>
+        <a href="watch.html?id=${id}&title=${encodeURIComponent(video.title)}" class="video-link">
+            <div class="thumbinal-container">
+                <img src="imgs/${thumbnail}" class="thumbinal">
+                <p class="duration">00:56</p>
+            </div>
+            <div class="video-info">
+                <img src="imgs/icon-big.png" class="icon">
+            </div>
+            <div class="video-details">
+                <h2 class="title">${video.title || `Video ${id}`}</h2>
+                <p class="channel-name">Ahmed Megahed</p>
+                <p class="views">${video.views} Views • ${timeAgo}</p>
+            </div>
+        </a>
     `;
 
+    // Add click event listener to track views
+    const videoLink = videoCard.querySelector('.video-link');
+    videoLink.addEventListener('click', async (e) => {
+        e.preventDefault(); // Prevent default link behavior
+        
+        try {
+            // Track the view first
+            await trackView(id);
+            
+            // Then navigate to the watch page
+            window.location.href = `watch.html?id=${id}&title=${encodeURIComponent(video.title)}`;
+        } catch (error) {
+            console.error('Failed to track view:', error);
+            // Fallback to normal navigation if tracking fails
+            window.location.href = `watch.html?id=${id}&title=${encodeURIComponent(video.title)}`;
+        }
+    });
+
     return videoCard;
+}
+
+// Function to track views by calling the backend API
+async function trackView(videoId) {
+    try {
+        const response = await fetch(`https://veezy-backend.onrender.com/videos/${videoId}/view`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        return await response.json();
+    } catch (error) {
+        console.error('Failed to track view:', error);
+        throw error;
+    }
 }
 
 // Format timestamp to "X time ago" format
