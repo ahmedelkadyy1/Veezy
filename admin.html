@@ -163,15 +163,45 @@ textarea {
 
 Copy
 <!-- Add this form anywhere in your existing admin.html -->
-<div class="upload-section">
-  <h3>Upload New Video</h3>
-  <form id="uploadForm">
-    <input type="text" id="videoTitle" placeholder="Video Title" required>
-    <input type="file" id="videoFile" accept="video/*" required>
-    <button type="button" onclick="handleUpload()">Upload</button>
+<form id="uploadForm" enctype="multipart/form-data">
+    <!-- 1. Video Title -->
+    <div class="form-group">
+      <label for="title">Video Title*</label>
+      <input type="text" id="title" required>
+    </div>
+  
+    <!-- 2. Video Description -->
+    <div class="form-group">
+      <label for="description">Description</label>
+      <textarea id="description"></textarea>
+    </div>
+  
+    <!-- 3. Channel Name -->
+    <div class="form-group">
+      <label for="channelName">Channel Name*</label>
+      <input type="text" id="channelName" required>
+    </div>
+  
+    <!-- 4. Channel Icon Upload -->
+    <div class="form-group">
+      <label for="channelIcon">Channel Icon*</label>
+      <input type="file" id="channelIcon" accept="image/*" required>
+    </div>
+  
+    <!-- 5. Video File Upload -->
+    <div class="form-group">
+      <label for="video">Video File*</label>
+      <input type="file" id="video" accept="video/*" required>
+    </div>
+  
+    <!-- 6. Thumbnail Upload -->
+    <div class="form-group">
+      <label for="thumbnail">Thumbnail*</label>
+      <input type="file" id="thumbnail" accept="image/*" required>
+    </div>
+  
+    <button type="submit">Upload Video</button>
   </form>
-  <div id="uploadStatus"></div>
-</div>
     
     <div class="section">
         <h2>Video Management</h2>
