@@ -200,7 +200,7 @@ Copy
       <input type="file" id="thumbnail" accept="image/*" required>
     </div>
   
-    <button type="submit">Upload Video</button>
+    <button type="button" id="uploadButton">Upload Video</button>
   </form>
     
     <div class="section">
@@ -645,6 +645,42 @@ async function handleUpload() {
     document.getElementById('uploadStatus').style.color = 'red';
   }
 }
+document.getElementById('uploadButton').addEventListener('click', async function(e) {
+  e.preventDefault();
+  
+  const form = document.getElementById('uploadForm');
+  const formData = new FormData(form);
+  const statusElement = document.getElementById('uploadStatus');
+
+  try {
+    statusElement.textContent = 'Uploading...';
+    statusElement.style.color = 'blue';
+
+    const response = await fetch('/admin/upload', {
+      method: 'POST',
+      body: formData
+    });
+
+    if (!response.ok) {
+      throw new Error(await response.text());
+    }
+
+    const result = await response.json();
+    statusElement.textContent = 'Upload successful! Video ID: ' + result.video.videoId;
+    statusElement.style.color = 'green';
+    
+    // Refresh the video list without page reload
+    if (typeof loadVideos === 'function') {
+      await loadVideos();
+    }
+    
+  } catch (error) {
+    statusElement.textContent = 'Error: ' + error.message;
+    statusElement.style.color = 'red';
+    console.error('Upload failed:', error);
+  }
+});
+
     </script>
 </body>
 </html>
