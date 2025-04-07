@@ -158,3 +158,19 @@ function formatTimeAgo(timestamp) {
 
 // Optional: Auto-refresh every 30 seconds
 setInterval(loadVideos, 30000);
+// Add this at the bottom of your existing file
+// Auto-refresh every 30 seconds
+setInterval(() => {
+    if (!document.hidden) { // Only refresh if tab is active
+      loadVideos(); // Your existing function
+    }
+  }, 30000);
+  
+  // Add this helper function if not present
+  function createSlug(title) {
+    return title.toLowerCase()
+      .replace(/[^\w\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .trim();
+  }
