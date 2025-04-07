@@ -159,6 +159,19 @@ textarea {
             <div id="uploadStatus"></div>
         </form>
     </div> -->
+
+
+Copy
+<!-- Add this form anywhere in your existing admin.html -->
+<div class="upload-section">
+  <h3>Upload New Video</h3>
+  <form id="uploadForm">
+    <input type="text" id="videoTitle" placeholder="Video Title" required>
+    <input type="file" id="videoFile" accept="video/*" required>
+    <button type="button" onclick="handleUpload()">Upload</button>
+  </form>
+  <div id="uploadStatus"></div>
+</div>
     
     <div class="section">
         <h2>Video Management</h2>
@@ -575,6 +588,33 @@ textarea {
                 setTimeout(testConnection, 500);
             }
         });
+        // Add this to your existing script
+async function handleUpload() {
+  const formData = new FormData();
+  formData.append('title', document.getElementById('videoTitle').value);
+  formData.append('video', document.getElementById('videoFile').files[0]);
+
+  try {
+    const statusEl = document.getElementById('uploadStatus');
+    statusEl.textContent = 'Uploading...';
+    statusEl.style.color = 'blue';
+
+    const response = await fetch('/admin/upload', {
+      method: 'POST',
+      body: formData
+    });
+
+    const result = await response.json();
+    statusEl.textContent = `Uploaded: ${result.video.title}`;
+    statusEl.style.color = 'green';
+    
+    // Refresh video list
+    loadVideos(); // Your existing function
+  } catch (err) {
+    document.getElementById('uploadStatus').textContent = `Error: ${err.message}`;
+    document.getElementById('uploadStatus').style.color = 'red';
+  }
+}
     </script>
 </body>
 </html>
