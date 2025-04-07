@@ -81,6 +81,26 @@
         .success {
             color: #4CAF50;
         }
+        #uploadForm {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+#uploadStatus {
+    margin-top: 10px;
+    padding: 10px;
+    border-radius: 4px;
+}
+
+textarea {
+    width: 100%;
+    padding: 8px;
+    box-sizing: border-box;
+    resize: vertical;
+    min-height: 80px;
+    font-family: Arial, sans-serif;
+}
     </style>
 </head>
 <body>
@@ -95,6 +115,49 @@
         <input type="password" id="adminToken" placeholder="your-secret-token">
         <button onclick="testConnection()">Test Connection</button>
         <div id="connectionStatus"></div>
+    </div>
+
+    <div class="section">
+        <h2>Add New Video</h2>
+        <form id="uploadForm" enctype="multipart/form-data">
+            <div class="control-group">
+                <label for="videoTitle">Title:</label>
+                <input type="text" id="videoTitle" required placeholder="Video title">
+            </div>
+            
+            <div class="control-group">
+                <label for="videoDescription">Description:</label>
+                <textarea id="videoDescription" rows="3" placeholder="Video description"></textarea>
+            </div>
+            
+            <div class="control-group">
+                <label for="videoFile">Video File:</label>
+                <input type="file" id="videoFile" accept="video/*" required>
+            </div>
+            
+            <div class="control-group">
+                <label for="thumbnailFile">Thumbnail Image:</label>
+                <input type="file" id="thumbnailFile" accept="image/*">
+            </div>
+            
+            <div class="control-group">
+                <label for="videoCategory">Category:</label>
+                <select id="videoCategory">
+                    <option value="websites">Websites</option>
+                    <option value="music">Music</option>
+                    <option value="html">HTML</option>
+                    <option value="css">CSS</option>
+                    <option value="javascript">JavaScript</option>
+                    <option value="bootstrap">Bootstrap</option>
+                    <option value="web-development">Web Development</option>
+                    <option value="web-design">Web Design</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+            
+            <button type="button" onclick="uploadVideo()">Upload Video</button>
+            <div id="uploadStatus"></div>
+        </form>
     </div>
     
     <div class="section">
@@ -206,6 +269,69 @@
                 log(`Connection test failed: ${error.message}`, true);
             }
         }
+
+        async function uploadVideo() {
+    const title = document.getElementById('videoTitle').value;
+    const description = document.getElementById('videoDescription').value;
+    const videoFile = document.getElementById('videoFile').files[0];
+    const thumbnailFile = document.getElementById('thumbnailFile').files[0];
+    const category = document.getElementById('videoCategory').value;
+    
+    if (!title || !videoFile) {
+        log("Error: Title and video file are required", true);
+        return;
+    }
+    
+    const statusElement = document.getElementById('uploadStatus');
+    statusElement.innerHTML = 'Uploading...';
+    statusElement.className = '';
+    
+    try {
+        const formData = new FormData();
+        formData.append('title', title);
+        formData.append('description', description);
+        formData.append('video', videoFile);
+        if (thumbnailFile) formData.append('thumbnail', thumbnailFile);
+        formData.append('category', category);
+        
+        const response = await fetch(`${getApiUrl()}/admin/videos`, {
+            method: 'POST',
+            headers: getAuthHeader(),
+            body: formData
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await handleApiResponse(response);
+        statusElement.innerHTML = '✅ Video uploaded successfully!';
+        statusElement.className = 'success';
+        log(`Uploaded new video: ${JSON.stringify(data)}`);
+        
+        // Clear the form
+        document.getElementById('uploadForm').reset();
+        
+        // Refresh the video list
+        getAllVideos();
+    } catch (error) {
+        statusElement.innerHTML = '❌ Upload failed: ' + error.message;
+        statusElement.className = 'error';
+        log(`Video upload failed: ${error.message}`, true);
+    }
+}
+
+// Add thumbnail preview
+document.getElementById('thumbnailFile').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            document.getElementById('thumbnailPreview').src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+});
 
         // API Functions
         async function setUploadTime() {
