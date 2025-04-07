@@ -619,13 +619,11 @@ Copy
             }
         });
         // Add this to your existing script
-async function handleUpload() {
-  const formData = new FormData();
-  formData.append('title', document.getElementById('videoTitle').value);
-  formData.append('video', document.getElementById('videoFile').files[0]);
-
+        async function handleUpload() {
+  const formData = new FormData(document.getElementById('uploadForm'));
+  const statusEl = document.getElementById('uploadStatus');
+  
   try {
-    const statusEl = document.getElementById('uploadStatus');
     statusEl.textContent = 'Uploading...';
     statusEl.style.color = 'blue';
 
@@ -634,15 +632,23 @@ async function handleUpload() {
       body: formData
     });
 
+    if (!response.ok) throw new Error(await response.text());
+    
     const result = await response.json();
-    statusEl.textContent = `Uploaded: ${result.video.title}`;
+    statusEl.textContent = 'Upload successful!';
     statusEl.style.color = 'green';
     
-    // Refresh video list
-    loadVideos(); // Your existing function
+    // IMPORTANT: Refresh the video list
+    if (window.parent && window.parent.loadVideos) {
+      window.parent.loadVideos(); // If admin is in an iframe
+    } else if (window.loadVideos) {
+      loadVideos(); // If standalone admin page
+    }
+    
   } catch (err) {
-    document.getElementById('uploadStatus').textContent = `Error: ${err.message}`;
-    document.getElementById('uploadStatus').style.color = 'red';
+    statusEl.textContent = `Error: ${err.message}`;
+    statusEl.style.color = 'red';
+    console.error('Upload failed:', err);
   }
 }
 document.getElementById('uploadButton').addEventListener('click', async function(e) {
