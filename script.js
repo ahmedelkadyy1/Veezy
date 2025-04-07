@@ -65,31 +65,37 @@ function createSlug(title) {
 // Main function to load videos from backend
 async function loadVideos() {
     try {
-        const response = await fetch('https://veezy-backend.onrender.com/videos');
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const videos = await response.json();
-        renderVideos(videos);
-    } catch (error) {
-        console.error('Failed to load videos:', error);
-        // Fallback to default videos if API fails
-        renderVideos({
-            1: {
-                views: 0,
-                uploadTime: new Date().toISOString(),
-                title: "Blanx an E-commerce Website"
-            },
-            2: {
-                views: 0,
-                uploadTime: new Date().toISOString(),
-                title: "WatchNest a Movie Website"
-            }
+      const response = await fetch('/videos');
+      if (!response.ok) throw new Error('Failed to load videos');
+      
+      const videos = await response.json();
+      const container = document.getElementById('video-list-container');
+      
+      // Clear existing videos
+      container.innerHTML = '';
+      
+      // Add new videos
+      Object.entries(videos).forEach(([id, video]) => {
+        const videoCard = createVideoCard(id, video);
+        container.appendChild(videoCard);
+      });
+      
+      // Force browser to check for new files
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(registrations => {
+          registrations.forEach(registration => {
+            registration.update();
+          });
         });
+      }
+      
+    } catch (err) {
+      console.error('Error loading videos:', err);
     }
-}
+  }
+  
+  // Make this function globally available
+  window.loadVideos = loadVideos;
 
 // Render videos to the page
 function renderVideos(videos) {
