@@ -1,7 +1,52 @@
 // Wait for DOM to load
 document.addEventListener('DOMContentLoaded', async () => {
     await loadVideos();
+    
+    // Add click event listener to video cards
+    document.addEventListener('click', handleVideoClick);
 });
+
+// Handle video card clicks
+async function handleVideoClick(event) {
+    // Find the closest video card element
+    const videoCard = event.target.closest('.video-card');
+    if (!videoCard) return;
+
+    const videoId = videoCard.dataset.videoId;
+    
+    // Check if this video has already been viewed in this session
+    const viewedVideos = JSON.parse(sessionStorage.getItem('viewedVideos') || '{}');
+    if (viewedVideos[videoId]) {
+        return; // Already viewed in this session
+    }
+
+    try {
+        // Increment view count on the server
+        const response = await fetch(`https://veezy-backend.onrender.com/videos/${videoId}/view`, {
+            method: 'POST'
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        // Mark as viewed in this session
+        viewedVideos[videoId] = true;
+        sessionStorage.setItem('viewedVideos', JSON.stringify(viewedVideos));
+
+        // Update the local view count display immediately
+        const viewsElement = videoCard.querySelector('.views');
+        if (viewsElement) {
+            const currentViews = parseInt(viewsElement.textContent) || 0;
+            viewsElement.textContent = viewsElement.textContent.replace(
+                /(\d+) Views/, 
+                `${currentViews + 1} Views`
+            );
+        }
+    } catch (error) {
+        console.error('Failed to increment view count:', error);
+    }
+}
 
 // Main function to load videos from backend
 async function loadVideos() {
@@ -43,9 +88,10 @@ function renderVideos(videos) {
     });
 }
 
-// Create individual video card element with click handler
+// Create individual video card element
 function createVideoCard(id, video) {
-    const videoCard = document.createElement('div');
+    const videoCard = document.createElement('a');
+    videoCard.href = `watch.html?id=${id}`;
     videoCard.className = 'video-card';
     videoCard.dataset.videoId = id;
 
@@ -53,62 +99,21 @@ function createVideoCard(id, video) {
     const thumbnail = id === '1' ? 'blanx-thumbinal.png' : 'watchnest-thumbinal.png';
 
     videoCard.innerHTML = `
-        <a href="watch.html?id=${id}&title=${encodeURIComponent(video.title)}" class="video-link">
-            <div class="thumbinal-container">
-                <img src="imgs/${thumbnail}" class="thumbinal">
-                <p class="duration">00:56</p>
-            </div>
-            <div class="video-info">
-                <img src="imgs/icon-big.png" class="icon">
-            </div>
-            <div class="video-details">
-                <h2 class="title">${video.title || `Video ${id}`}</h2>
-                <p class="channel-name">Ahmed Megahed</p>
-                <p class="views">${video.views} Views • ${timeAgo}</p>
-            </div>
-        </a>
+        <div class="thumbinal-container">
+            <img src="imgs/${thumbnail}" class="thumbinal">
+            <p class="duration">00:56</p>
+        </div>
+        <div class="video-info">
+            <img src="imgs/icon-big.png" class="icon">
+        </div>
+        <div class="video-details">
+            <h2 class="title">${video.title || `Video ${id}`}</h2>
+            <p class="channel-name">Ahmed Megahed</p>
+            <p class="views">${video.views} Views • ${timeAgo}</p>
+        </div>
     `;
 
-    // Add click event listener to track views
-    const videoLink = videoCard.querySelector('.video-link');
-    videoLink.addEventListener('click', async (e) => {
-        e.preventDefault(); // Prevent default link behavior
-        
-        try {
-            // Track the view first
-            await trackView(id);
-            
-            // Then navigate to the watch page
-            window.location.href = `watch.html?id=${id}&title=${encodeURIComponent(video.title)}`;
-        } catch (error) {
-            console.error('Failed to track view:', error);
-            // Fallback to normal navigation if tracking fails
-            window.location.href = `watch.html?id=${id}&title=${encodeURIComponent(video.title)}`;
-        }
-    });
-
     return videoCard;
-}
-
-// Function to track views by calling the backend API
-async function trackView(videoId) {
-    try {
-        const response = await fetch(`https://veezy-backend.onrender.com/videos/${videoId}/view`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        return await response.json();
-    } catch (error) {
-        console.error('Failed to track view:', error);
-        throw error;
-    }
 }
 
 // Format timestamp to "X time ago" format
