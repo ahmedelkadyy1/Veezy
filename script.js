@@ -12,40 +12,54 @@ async function handleVideoClick(event) {
     const videoCard = event.target.closest('.video-card');
     if (!videoCard) return;
 
+    event.preventDefault(); // Prevent default link behavior
+    
     const videoId = videoCard.dataset.videoId;
+    const videoTitle = videoCard.querySelector('.title').textContent;
+    const videoSlug = createSlug(videoTitle);
     
     // Check if this video has already been viewed in this session
     const viewedVideos = JSON.parse(sessionStorage.getItem('viewedVideos') || '{}');
-    if (viewedVideos[videoId]) {
-        return; // Already viewed in this session
-    }
+    if (!viewedVideos[videoId]) {
+        try {
+            // Increment view count on the server
+            const response = await fetch(`https://veezy-backend.onrender.com/videos/${videoId}/view`, {
+                method: 'POST'
+            });
 
-    try {
-        // Increment view count on the server
-        const response = await fetch(`https://veezy-backend.onrender.com/videos/${videoId}/view`, {
-            method: 'POST'
-        });
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
 
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            // Mark as viewed in this session
+            viewedVideos[videoId] = true;
+            sessionStorage.setItem('viewedVideos', JSON.stringify(viewedVideos));
+
+            // Update the local view count display immediately
+            const viewsElement = videoCard.querySelector('.views');
+            if (viewsElement) {
+                const currentViews = parseInt(viewsElement.textContent) || 0;
+                viewsElement.textContent = viewsElement.textContent.replace(
+                    /(\d+) Views/, 
+                    `${currentViews + 1} Views`
+                );
+            }
+        } catch (error) {
+            console.error('Failed to increment view count:', error);
         }
-
-        // Mark as viewed in this session
-        viewedVideos[videoId] = true;
-        sessionStorage.setItem('viewedVideos', JSON.stringify(viewedVideos));
-
-        // Update the local view count display immediately
-        const viewsElement = videoCard.querySelector('.views');
-        if (viewsElement) {
-            const currentViews = parseInt(viewsElement.textContent) || 0;
-            viewsElement.textContent = viewsElement.textContent.replace(
-                /(\d+) Views/, 
-                `${currentViews + 1} Views`
-            );
-        }
-    } catch (error) {
-        console.error('Failed to increment view count:', error);
     }
+    
+    // Redirect to the video page with title-only URL
+    window.location.href = `${videoSlug}.html`;
+}
+
+// Create URL-friendly slug from title
+function createSlug(title) {
+    return title.toLowerCase()
+        .replace(/[^\w\s-]/g, '') // Remove non-word characters
+        .replace(/\s+/g, '-')     // Replace spaces with hyphens
+        .replace(/-+/g, '-')      // Replace multiple hyphens with single
+        .trim();                  // Trim leading/trailing hyphens
 }
 
 // Main function to load videos from backend
@@ -91,7 +105,8 @@ function renderVideos(videos) {
 // Create individual video card element
 function createVideoCard(id, video) {
     const videoCard = document.createElement('a');
-    videoCard.href = `watch.html?id=${id}`;
+    const videoSlug = createSlug(video.title || `Video ${id}`);
+    videoCard.href = `${videoSlug}.html`;
     videoCard.className = 'video-card';
     videoCard.dataset.videoId = id;
 
