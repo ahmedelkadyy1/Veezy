@@ -654,18 +654,22 @@ Copy
 document.getElementById('uploadButton').addEventListener('click', async function(e) {
     e.preventDefault();
     
+    // Get form elements
     const title = document.getElementById('title').value;
     const description = document.getElementById('description').value;
     const channelName = document.getElementById('channelName').value;
     const channelIcon = document.getElementById('channelIcon').files[0];
     const videoFile = document.getElementById('video').files[0];
     const thumbnail = document.getElementById('thumbnail').files[0];
-    
+    const adminToken = document.getElementById('adminToken').value;
+
+    // Validation
     if (!title || !channelName || !channelIcon || !videoFile || !thumbnail) {
         alert('Please fill all required fields');
         return;
     }
-    
+
+    // Create FormData
     const formData = new FormData();
     formData.append('title', title);
     formData.append('description', description);
@@ -673,24 +677,31 @@ document.getElementById('uploadButton').addEventListener('click', async function
     formData.append('channelIcon', channelIcon);
     formData.append('video', videoFile);
     formData.append('thumbnail', thumbnail);
-    
+
     try {
         const response = await fetch('https://veezy-backend.onrender.com/admin/upload', {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${document.getElementById('adminToken').value}`
+                'Authorization': `Bearer ${adminToken}`
+                // Don't set Content-Type - let browser set it with boundary
             },
             body: formData
         });
-        
-        if (!response.ok) throw new Error(await response.text());
-        
+
         const result = await response.json();
-        alert('Upload successful! Video ID: ' + result.video.videoId);
-        getAllVideos(); // Refresh the video list
+        
+        if (!response.ok) {
+            throw new Error(result.error || 'Upload failed');
+        }
+
+        alert(`Upload successful! Video ID: ${result.video.videoId}`);
+        console.log('Upload response:', result);
+        
+        // Refresh video list
+        await getAllVideos();
     } catch (error) {
-        console.error('Upload failed:', error);
-        alert('Upload failed: ' + error.message);
+        console.error('Upload error:', error);
+        alert(`Upload failed: ${error.message}`);
     }
 });
 
