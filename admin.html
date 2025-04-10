@@ -471,330 +471,206 @@ Copy
 // });
 
         // API Functions
-        async function setUploadTime() {
-            const videoId = document.getElementById('videoId').value;
-            const newTime = document.getElementById('newTime').value;
-            
-            if (!videoId || !newTime) {
-                log("Error: Video ID and time are required", true);
-                return;
-            }
-            
-            try {
-                const response = await fetch(`${getApiUrl()}/admin/videos/${videoId}/set-upload-time`, {
-                    method: 'POST',
-                    headers: getAuthHeader(),
-                    body: JSON.stringify({ newTime: newTime + 'Z' })
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
-                const data = await handleApiResponse(response);
-                log(`Set time for video ${videoId}: ${JSON.stringify(data)}`);
-                getAllVideos();
-            } catch (error) {
-                log(`Error setting upload time: ${error.message}`, true);
-            }
-        }
-        
-        async function setViewCount() {
-            const videoId = document.getElementById('videoId').value;
-            const viewCount = document.getElementById('viewCount').value;
-            
-            if (!videoId || !viewCount) {
-                log("Error: Video ID and view count are required", true);
-                return;
-            }
-            
-            try {
-                const response = await fetch(`${getApiUrl()}/admin/videos/${videoId}/set-views`, {
-                    method: 'POST',
-                    headers: getAuthHeader(),
-                    body: JSON.stringify({ views: parseInt(viewCount) })
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
-                const data = await handleApiResponse(response);
-                log(`Set view count for video ${videoId} to ${viewCount}: ${JSON.stringify(data)}`);
-                getAllVideos();
-            } catch (error) {
-                log(`Error setting view count: ${error.message}`, true);
-            }
-        }
-        
-        function confirmDeleteVideo() {
-            const videoId = document.getElementById('videoId').value;
-            
-            if (!videoId) {
-                log("Error: Video ID is required", true);
-                return;
-            }
-            
-            if (confirm(`Are you sure you want to delete video ${videoId}? This cannot be undone!`)) {
-                deleteVideo();
-            }
-        }
-        
-        async function deleteVideo() {
-            const videoId = document.getElementById('videoId').value;
-            
-            try {
-                const response = await fetch(`${getApiUrl()}/admin/videos/${videoId}`, {
-                    method: 'DELETE',
-                    headers: getAuthHeader()
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
-                const data = await handleApiResponse(response);
-                log(`Deleted video ${videoId}: ${JSON.stringify(data)}`);
-                getAllVideos();
-            } catch (error) {
-                log(`Error deleting video: ${error.message}`, true);
-            }
-        }
-        
-        async function bulkUpdateTimes() {
-            const bulkData = document.getElementById('bulkData').value;
-            
-            try {
-                const jsonData = JSON.parse(bulkData);
-                const response = await fetch(`${getApiUrl()}/admin/videos/bulk-update-times`, {
-                    method: 'POST',
-                    headers: getAuthHeader(),
-                    body: JSON.stringify({ updates: jsonData })
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
-                const data = await handleApiResponse(response);
-                log(`Bulk update result: ${JSON.stringify(data)}`);
-                getAllVideos();
-            } catch (error) {
-                log(`Error in bulk update: ${error.message}`, true);
-            }
-        }
-        
-        async function getVideoInfo() {
-            const videoId = document.getElementById('videoId').value;
-            
-            if (!videoId) {
-                log("Error: Video ID is required", true);
-                return;
-            }
-            
-            try {
-                const response = await fetch(`${getApiUrl()}/videos/${videoId}`);
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
-                const data = await handleApiResponse(response);
-                log(`Video ${videoId} info: ${JSON.stringify(data)}`);
-                
-                // Update the form fields with the current data
-                if (data.uploadTime) {
-                    const date = new Date(data.uploadTime);
-                    const localDateTime = date.toISOString().slice(0, 16);
-                    document.getElementById('newTime').value = localDateTime;
-                }
-                if (data.views) {
-                    document.getElementById('viewCount').value = data.views;
-                }
-            } catch (error) {
-                log(`Error getting video info: ${error.message}`, true);
-            }
-        }
-        
-        async function getAllVideos() {
-            try {
-                const response = await fetch(`${getApiUrl()}/admin/videos`, {
-                    headers: getAuthHeader()
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
-                const data = await handleApiResponse(response);
-                const videoList = document.getElementById('videoList');
-                videoList.innerHTML = '';
-                
-                for (const [id, video] of Object.entries(data)) {
-                    const card = document.createElement('div');
-                    card.className = 'video-card';
-                    card.innerHTML = `
-                        <h3>Video ${id}</h3>
-                        <p>Views: ${video.views}</p>
-                        <p>Uploaded: ${new Date(video.uploadTime).toLocaleString()}</p>
-                        <div class="video-card-actions">
-                            <button onclick="selectVideo(${id}, ${video.views}, '${video.uploadTime}')">Select</button>
-                            <button class="danger" onclick="confirmDeleteVideoFromList(${id})">Delete</button>
-                        </div>
-                    `;
-                    videoList.appendChild(card);
-                }
-                
-                log("Refreshed video list");
-            } catch (error) {
-                log(`Error getting video list: ${error.message}`, true);
-            }
-        }
-        
-        // Helper functions for UI interactions
-        function selectVideo(id, views, uploadTime) {
-            document.getElementById('videoId').value = id;
-            document.getElementById('viewCount').value = views;
-            
-            if (uploadTime) {
-                const date = new Date(uploadTime);
-                const localDateTime = date.toISOString().slice(0, 16);
-                document.getElementById('newTime').value = localDateTime;
-            }
-            
-            log(`Selected video ${id}`);
-        }
-        
-        function confirmDeleteVideoFromList(id) {
-            if (confirm(`Are you sure you want to delete video ${id}? This cannot be undone!`)) {
-                document.getElementById('videoId').value = id;
-                deleteVideo();
-            }
-        }
-        
-        // Initialize
-        document.addEventListener('DOMContentLoaded', () => {
-            log("Admin dashboard ready");
-            // Set default API URL to your Render backend
-            document.getElementById('apiUrl').value = DEFAULT_API_URL;
-            // Try to load token from localStorage if available
-            const savedToken = localStorage.getItem('adminToken');
-            if (savedToken) {
-                document.getElementById('adminToken').value = savedToken;
-            }
-            // Test connection automatically if token exists
-            if (savedToken) {
-                setTimeout(testConnection, 500);
-            }
-        });
-        // Add this to your existing script
-        async function handleUpload() {
-  const formData = new FormData(document.getElementById('uploadForm'));
-  const statusEl = document.getElementById('uploadStatus');
-  
-  try {
-    statusEl.textContent = 'Uploading...';
-    statusEl.style.color = 'blue';
+        const DEFAULT_API_URL = 'https://veezy-backend.onrender.com';
+let videos = {}; // Stores fetched videos for edit
 
-    const response = await fetch('/admin/upload', {
-      method: 'POST',
-      body: formData
-    });
-
-    if (!response.ok) throw new Error(await response.text());
-    
-    const result = await response.json();
-    statusEl.textContent = 'Upload successful!';
-    statusEl.style.color = 'green';
-    
-    // IMPORTANT: Refresh the video list
-    if (window.parent && window.parent.loadVideos) {
-      window.parent.loadVideos(); // If admin is in an iframe
-    } else if (window.loadVideos) {
-      loadVideos(); // If standalone admin page
-    }
-    
-  } catch (err) {
-    statusEl.textContent = `Error: ${err.message}`;
-    statusEl.style.color = 'red';
-    console.error('Upload failed:', err);
-  }
+function getApiUrl() {
+    return document.getElementById('apiUrl').value || DEFAULT_API_URL;
 }
-document.getElementById('uploadButton').addEventListener('click', async function(e) {
-    e.preventDefault();
-    
-    // Get form elements
-    const title = document.getElementById('title').value;
-    const description = document.getElementById('description').value;
-    const channelName = document.getElementById('channelName').value;
-    const channelIcon = document.getElementById('channelIcon').files[0];
-    const videoFile = document.getElementById('video').files[0];
-    const thumbnail = document.getElementById('thumbnail').files[0];
-    const adminToken = document.getElementById('adminToken').value;
 
-    // Validation
-    if (!title || !channelName || !channelIcon || !videoFile || !thumbnail) {
-        alert('Please fill all required fields');
-        return;
+function getAuthHeader() {
+    const token = document.getElementById('adminToken').value;
+    localStorage.setItem('adminToken', token); // Save for reuse
+    return {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+    };
+}
+
+function log(message, isError = false) {
+    const logEl = document.getElementById('log');
+    const entry = document.createElement('div');
+    entry.textContent = message;
+    entry.style.color = isError ? 'red' : 'black';
+    logEl.prepend(entry);
+}
+
+async function handleApiResponse(response) {
+    const text = await response.text();
+    try {
+        return JSON.parse(text);
+    } catch {
+        throw new Error('Invalid JSON: ' + text);
     }
+}
 
-    // Create FormData
-    const formData = new FormData();
-    formData.append('title', title);
-    formData.append('description', description);
-    formData.append('channelName', channelName);
-    formData.append('channelIcon', channelIcon);
-    formData.append('video', videoFile);
-    formData.append('thumbnail', thumbnail);
+async function setUploadTime() {
+    const videoId = document.getElementById('videoId').value;
+    const newTime = document.getElementById('newTime').value;
+
+    if (!videoId || !newTime) return log("Error: Video ID and time are required", true);
 
     try {
-        const response = await fetch('https://veezy-backend.onrender.com/admin/upload', {
+        const response = await fetch(`${getApiUrl()}/admin/videos/${videoId}/set-upload-time`, {
             method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${adminToken}`
-                // Don't set Content-Type - let browser set it with boundary
-            },
-            body: formData
+            headers: getAuthHeader(),
+            body: JSON.stringify({ newTime: newTime + 'Z' })
         });
+        const data = await handleApiResponse(response);
+        log(`Set time for video ${videoId}: ${JSON.stringify(data)}`);
+        getAllVideos();
+    } catch (err) {
+        log(`Error setting upload time: ${err.message}`, true);
+    }
+}
 
-        const result = await response.json();
-        
-        if (!response.ok) {
-            throw new Error(result.error || 'Upload failed');
+async function setViewCount() {
+    const videoId = document.getElementById('videoId').value;
+    const viewCount = document.getElementById('viewCount').value;
+
+    if (!videoId || !viewCount) return log("Error: Video ID and view count are required", true);
+
+    try {
+        const response = await fetch(`${getApiUrl()}/admin/videos/${videoId}/set-views`, {
+            method: 'POST',
+            headers: getAuthHeader(),
+            body: JSON.stringify({ views: parseInt(viewCount) })
+        });
+        const data = await handleApiResponse(response);
+        log(`Set view count for video ${videoId}: ${JSON.stringify(data)}`);
+        getAllVideos();
+    } catch (err) {
+        log(`Error setting view count: ${err.message}`, true);
+    }
+}
+
+function confirmDeleteVideo() {
+    const videoId = document.getElementById('videoId').value;
+    if (!videoId) return log("Error: Video ID is required", true);
+    if (confirm(`Are you sure you want to delete video ${videoId}?`)) {
+        deleteVideo();
+    }
+}
+
+async function deleteVideo() {
+    const videoId = document.getElementById('videoId').value;
+
+    try {
+        const response = await fetch(`${getApiUrl()}/admin/videos/${videoId}`, {
+            method: 'DELETE',
+            headers: getAuthHeader()
+        });
+        const data = await handleApiResponse(response);
+        log(`Deleted video ${videoId}: ${JSON.stringify(data)}`);
+        getAllVideos();
+    } catch (err) {
+        log(`Error deleting video: ${err.message}`, true);
+    }
+}
+
+function confirmDeleteVideoFromList(id) {
+    if (confirm(`Are you sure you want to delete video ${id}?`)) {
+        document.getElementById('videoId').value = id;
+        deleteVideo();
+    }
+}
+
+async function bulkUpdateTimes() {
+    const bulkData = document.getElementById('bulkData').value;
+
+    try {
+        const jsonData = JSON.parse(bulkData);
+        const response = await fetch(`${getApiUrl()}/admin/videos/bulk-update-times`, {
+            method: 'POST',
+            headers: getAuthHeader(),
+            body: JSON.stringify({ updates: jsonData })
+        });
+        const data = await handleApiResponse(response);
+        log(`Bulk update result: ${JSON.stringify(data)}`);
+        getAllVideos();
+    } catch (err) {
+        log(`Error in bulk update: ${err.message}`, true);
+    }
+}
+
+async function getVideoInfo() {
+    const videoId = document.getElementById('videoId').value;
+    if (!videoId) return log("Error: Video ID is required", true);
+
+    try {
+        const response = await fetch(`${getApiUrl()}/videos/${videoId}`);
+        const data = await handleApiResponse(response);
+        log(`Video ${videoId} info: ${JSON.stringify(data)}`);
+
+        const date = new Date(data.uploadTime);
+        document.getElementById('newTime').value = date.toISOString().slice(0, 16);
+        document.getElementById('viewCount').value = data.views;
+    } catch (err) {
+        log(`Error getting video info: ${err.message}`, true);
+    }
+}
+
+async function getAllVideos() {
+    try {
+        const response = await fetch(`${getApiUrl()}/admin/videos`, {
+            headers: getAuthHeader()
+        });
+        const data = await handleApiResponse(response);
+        videos = data;
+
+        const videoList = document.getElementById('videoList');
+        videoList.innerHTML = '';
+
+        for (const [id, video] of Object.entries(data)) {
+            const card = document.createElement('div');
+            card.className = 'video-card';
+            card.innerHTML = `
+                <h3>${video.title || 'Untitled Video'}</h3>
+                <p>Channel: ${video.channelName || 'Unknown'}</p>
+                <p>Views: ${video.views}</p>
+                <p>Uploaded: ${new Date(video.uploadTime).toLocaleString()}</p>
+                <div class="video-card-actions">
+                    <button onclick="selectVideo('${id}', ${video.views}, '${video.uploadTime}')">Select</button>
+                    <button onclick="openEditForm('${id}')">Edit</button>
+                    <button class="danger" onclick="confirmDeleteVideoFromList('${id}')">Delete</button>
+                </div>
+            `;
+            videoList.appendChild(card);
         }
 
-        alert(`Upload successful! Video ID: ${result.video.videoId}`);
-        console.log('Upload response:', result);
-        
-        // Refresh video list
-        await getAllVideos();
-    } catch (error) {
-        console.error('Upload error:', error);
-        alert(`Upload failed: ${error.message}`);
+        log("Refreshed video list");
+    } catch (err) {
+        log(`Error getting video list: ${err.message}`, true);
     }
-});
-// Add to your admin.html script
+}
+
+function selectVideo(id, views, uploadTime) {
+    document.getElementById('videoId').value = id;
+    document.getElementById('viewCount').value = views;
+    const date = new Date(uploadTime);
+    document.getElementById('newTime').value = date.toISOString().slice(0, 16);
+    log(`Selected video ${id}`);
+}
+
 function openEditForm(videoId) {
     const video = videos[videoId];
     if (!video) return;
-    
+
     document.getElementById('editSection').style.display = 'block';
     document.getElementById('editVideoId').value = videoId;
     document.getElementById('editTitle').value = video.title || '';
     document.getElementById('editDescription').value = video.description || '';
     document.getElementById('editChannelName').value = video.channelName || '';
-    
-    // Display current images
+
     if (video.thumbnail) {
-        document.getElementById('currentThumbnail').src = 
-            `https://veezy-backend.onrender.com/uploads/thumbnails/${video.thumbnail}`;
+        document.getElementById('currentThumbnail').src =
+            `${getApiUrl()}/uploads/thumbnails/${video.thumbnail}`;
     }
     if (video.channelIcon) {
-        document.getElementById('currentChannelIcon').src = 
-            `https://veezy-backend.onrender.com/uploads/icons/${video.channelIcon}`;
+        document.getElementById('currentChannelIcon').src =
+            `${getApiUrl()}/uploads/icons/${video.channelIcon}`;
     }
-    
-    // Scroll to edit form
+
     document.getElementById('editSection').scrollIntoView();
 }
 
@@ -811,78 +687,95 @@ async function updateVideo() {
     const thumbnailFile = document.getElementById('editThumbnail').files[0];
     const channelIconFile = document.getElementById('editChannelIcon').files[0];
     const statusElement = document.getElementById('editStatus');
-    
+
     if (!title || !channelName) {
         statusElement.textContent = 'Title and Channel Name are required';
         statusElement.style.color = 'red';
         return;
     }
-    
+
     try {
         statusElement.textContent = 'Updating...';
         statusElement.style.color = 'blue';
-        
-        // First update text fields
-        const response = await fetch(`https://veezy-backend.onrender.com/admin/videos/${videoId}`, {
+
+        await fetch(`${getApiUrl()}/admin/videos/${videoId}`, {
             method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${document.getElementById('adminToken').value}`
-            },
+            headers: getAuthHeader(),
             body: JSON.stringify({ title, description, channelName })
         });
-        
-        if (!response.ok) throw new Error('Failed to update video info');
-        
-        // Then update media files if provided
+
         if (thumbnailFile || channelIconFile) {
             const formData = new FormData();
             if (thumbnailFile) formData.append('thumbnail', thumbnailFile);
             if (channelIconFile) formData.append('channelIcon', channelIconFile);
-            
-            const mediaResponse = await fetch(`https://veezy-backend.onrender.com/admin/videos/${videoId}/media`, {
+
+            await fetch(`${getApiUrl()}/admin/videos/${videoId}/media`, {
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${document.getElementById('adminToken').value}`
                 },
                 body: formData
             });
-            
-            if (!mediaResponse.ok) throw new Error('Failed to update media');
         }
-        
+
         statusElement.textContent = 'Video updated successfully!';
         statusElement.style.color = 'green';
-        
-        // Refresh video list
+
         setTimeout(() => {
             getAllVideos();
             cancelEdit();
         }, 1500);
-        
     } catch (error) {
-        console.error('Update error:', error);
         statusElement.textContent = `Error: ${error.message}`;
         statusElement.style.color = 'red';
     }
 }
 
-// Update your video card generation to include edit button
-function getAllVideos() {
-    // ... existing code ...
-    card.innerHTML = `
-        <h3>${video.title || 'Untitled Video'}</h3>
-        <p>Channel: ${video.channelName || 'Unknown'}</p>
-        <p>Views: ${video.views}</p>
-        <p>Uploaded: ${new Date(video.uploadTime).toLocaleString()}</p>
-        <div class="video-card-actions">
-            <button onclick="selectVideo('${id}', ${video.views}, '${video.uploadTime}')">Select</button>
-            <button onclick="openEditForm('${id}')">Edit</button>
-            <button class="danger" onclick="confirmDeleteVideoFromList('${id}')">Delete</button>
-        </div>
-    `;
-    // ... rest of existing code ...
-}
+document.getElementById('uploadButton').addEventListener('click', async function (e) {
+    e.preventDefault();
+
+    const form = document.getElementById('uploadForm');
+    const formData = new FormData(form);
+    const adminToken = document.getElementById('adminToken').value;
+    const statusEl = document.getElementById('uploadStatus');
+
+    if (!form.title.value || !form.channelName.value || !form.channelIcon.files[0] ||
+        !form.video.files[0] || !form.thumbnail.files[0]) {
+        alert('Please fill all required fields');
+        return;
+    }
+
+    try {
+        statusEl.textContent = 'Uploading...';
+        statusEl.style.color = 'blue';
+
+        const response = await fetch(`${getApiUrl()}/admin/upload`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${adminToken}` },
+            body: formData
+        });
+
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || 'Upload failed');
+
+        alert(`Upload successful! Video ID: ${result.video.videoId}`);
+        statusEl.textContent = 'Upload successful!';
+        statusEl.style.color = 'green';
+
+        getAllVideos();
+    } catch (error) {
+        statusEl.textContent = `Upload failed: ${error.message}`;
+        statusEl.style.color = 'red';
+    }
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('apiUrl').value = DEFAULT_API_URL;
+    const savedToken = localStorage.getItem('adminToken');
+    if (savedToken) document.getElementById('adminToken').value = savedToken;
+    if (savedToken) setTimeout(getAllVideos, 500);
+});
+
     </script>
 </body>
 </html>
