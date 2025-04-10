@@ -8,6 +8,35 @@
     <link rel="stylesheet" href="style.css">
     <title>Veezy</title>
 </head>
+<script>
+    document.addEventListener('DOMContentLoaded', async () => {
+        try {
+            const response = await fetch('https://veezy-backend.onrender.com/videos');
+            if (!response.ok) throw new Error('Failed to fetch videos');
+            
+            const videos = await response.json();
+            const videoListContainer = document.getElementById('video-list-container');
+            
+            // Clear existing content
+            videoListContainer.innerHTML = '';
+            
+            // Add each video to the page
+            Object.entries(videos).forEach(([id, video]) => {
+                const videoElement = document.createElement('div');
+                videoElement.className = 'video-item';
+                videoElement.innerHTML = `
+                    <img src="https://veezy-backend.onrender.com/uploads/thumbnails/${video.thumbnail}" alt="${video.title}">
+                    <h3>${video.title}</h3>
+                    <p>${video.channelName}</p>
+                    <p>${video.views} views</p>
+                `;
+                videoListContainer.appendChild(videoElement);
+            });
+        } catch (error) {
+            console.error('Error loading videos:', error);
+        }
+    });
+    </script>
 <body>
     <div class="container">
         <header>
