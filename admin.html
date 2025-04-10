@@ -357,30 +357,32 @@ Copy
 
         // Connection test
         async function testConnection() {
-            const statusElement = document.getElementById('connectionStatus');
-            statusElement.innerHTML = 'Testing connection...';
-            statusElement.className = '';
-            
-            try {
-                const response = await fetch(`${getApiUrl()}/health`, {
-                    method: 'GET',
-                    headers: getAuthHeader()
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
-                const data = await handleApiResponse(response);
-                statusElement.innerHTML = '✅ Connection successful!';
-                statusElement.className = 'success';
-                log(`Connection test successful: ${JSON.stringify(data)}`);
-            } catch (error) {
-                statusElement.innerHTML = '❌ Connection failed: ' + error.message;
-                statusElement.className = 'error';
-                log(`Connection test failed: ${error.message}`, true);
-            }
+    const url = `${getApiUrl()}/health`;
+    console.log('Testing connection to:', url);
+    
+    try {
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: getAuthHeader()
+        });
+        console.log('Raw response:', response);
+        
+        if (!response.ok) {
+            const text = await response.text();
+            throw new Error(`HTTP ${response.status}: ${text}`);
         }
+        
+        const data = await response.json();
+        document.getElementById('connectionStatus').innerHTML = 
+            '✅ Connection successful! Server says: ' + data.message;
+        log(`Connection test successful to ${url}`);
+    } catch (error) {
+        console.error('Full connection error:', error);
+        document.getElementById('connectionStatus').innerHTML = 
+            '❌ Connection failed: ' + error.message;
+        log(`Connection test to ${url} failed: ${error.message}`, true);
+    }
+}
 
 //         async function uploadVideo(videoFile) {
 //     const formData = new FormData();
