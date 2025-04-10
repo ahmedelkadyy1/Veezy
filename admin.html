@@ -617,39 +617,29 @@ Copy
         }
         
         async function getAllVideos() {
-            try {
-                const response = await fetch(`${getApiUrl()}/admin/videos`, {
-                    headers: getAuthHeader()
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
-                const data = await handleApiResponse(response);
-                const videoList = document.getElementById('videoList');
-                videoList.innerHTML = '';
-                
-                for (const [id, video] of Object.entries(data)) {
-                    const card = document.createElement('div');
-                    card.className = 'video-card';
-                    card.innerHTML = `
-                        <h3>Video ${id}</h3>
-                        <p>Views: ${video.views}</p>
-                        <p>Uploaded: ${new Date(video.uploadTime).toLocaleString()}</p>
-                        <div class="video-card-actions">
-                            <button onclick="selectVideo(${id}, ${video.views}, '${video.uploadTime}')">Select</button>
-                            <button class="danger" onclick="confirmDeleteVideoFromList(${id})">Delete</button>
-                        </div>
-                    `;
-                    videoList.appendChild(card);
-                }
-                
-                log("Refreshed video list");
-            } catch (error) {
-                log(`Error getting video list: ${error.message}`, true);
+    try {
+        const response = await fetch(`${getApiUrl()}/videos`, { // Changed endpoint
+            headers: {
+                'Authorization': `Bearer ${document.getElementById('adminToken').value}`
             }
+        });
+        
+        console.log('Response status:', response.status); // Log status
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Error response:', errorText);
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
+        
+        const data = await response.json();
+        console.log('Received data:', data); // Log received data
+        // ... rest of your code ...
+    } catch (error) {
+        console.error('Full error:', error);
+        log(`Error getting video list: ${error.message}`, true);
+    }
+}
         
         // Helper functions for UI interactions
         function selectVideo(id, views, uploadTime) {
@@ -721,53 +711,34 @@ Copy
   }
 }
 document.getElementById('uploadButton').addEventListener('click', async function(e) {
-    e.preventDefault();
+    e.preventDefault(); // This is crucial
     
-    // Get form elements
-    const title = document.getElementById('title').value;
-    const description = document.getElementById('description').value;
-    const channelName = document.getElementById('channelName').value;
-    const channelIcon = document.getElementById('channelIcon').files[0];
-    const videoFile = document.getElementById('video').files[0];
-    const thumbnail = document.getElementById('thumbnail').files[0];
-    const adminToken = document.getElementById('adminToken').value;
-
-    // Validation
-    if (!title || !channelName || !channelIcon || !videoFile || !thumbnail) {
-        alert('Please fill all required fields');
-        return;
-    }
-
-    // Create FormData
     const formData = new FormData();
-    formData.append('title', title);
-    formData.append('description', description);
-    formData.append('channelName', channelName);
-    formData.append('channelIcon', channelIcon);
-    formData.append('video', videoFile);
-    formData.append('thumbnail', thumbnail);
+    // Append all your form data
+    formData.append('title', document.getElementById('title').value);
+    formData.append('description', document.getElementById('description').value);
+    formData.append('channelName', document.getElementById('channelName').value);
+    formData.append('channelIcon', document.getElementById('channelIcon').files[0]);
+    formData.append('video', document.getElementById('video').files[0]);
+    formData.append('thumbnail', document.getElementById('thumbnail').files[0]);
 
     try {
-        const response = await fetch('https://veezy-backend.onrender.com/admin/upload', {
+        const response = await fetch(`${getApiUrl()}/admin/upload`, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${adminToken}`
-                // Don't set Content-Type - let browser set it with boundary
+                'Authorization': `Bearer ${document.getElementById('adminToken').value}`
             },
             body: formData
         });
 
-        const result = await response.json();
-        
         if (!response.ok) {
-            throw new Error(result.error || 'Upload failed');
+            const error = await response.json();
+            throw new Error(error.message || 'Upload failed');
         }
 
-        alert(`Upload successful! Video ID: ${result.video.videoId}`);
-        console.log('Upload response:', result);
-        
-        // Refresh video list
-        await getAllVideos();
+        const result = await response.json();
+        alert('Upload successful!');
+        getAllVideos(); // Refresh the list
     } catch (error) {
         console.error('Upload error:', error);
         alert(`Upload failed: ${error.message}`);
