@@ -9,33 +9,37 @@
     <title>Veezy</title>
 </head>
 <script>
-    document.addEventListener('DOMContentLoaded', async () => {
-        try {
-            const response = await fetch('https://veezy-backend.onrender.com/videos');
-            if (!response.ok) throw new Error('Failed to fetch videos');
-            
-            const videos = await response.json();
-            const videoListContainer = document.getElementById('video-list-container');
-            
-            // Clear existing content
-            videoListContainer.innerHTML = '';
-            
-            // Add each video to the page
-            Object.entries(videos).forEach(([id, video]) => {
-                const videoElement = document.createElement('div');
-                videoElement.className = 'video-item';
-                videoElement.innerHTML = `
-                    <img src="https://veezy-backend.onrender.com/uploads/thumbnails/${video.thumbnail}" alt="${video.title}">
-                    <h3>${video.title}</h3>
-                    <p>${video.channelName}</p>
-                    <p>${video.views} views</p>
-                `;
-                videoListContainer.appendChild(videoElement);
-            });
-        } catch (error) {
-            console.error('Error loading videos:', error);
-        }
+   document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    const response = await fetch('https://veezy-backend.onrender.com/videos');
+    if (!response.ok) throw new Error('Failed to fetch videos');
+    
+    const videos = await response.json();
+    const videoListContainer = document.getElementById('video-list-container');
+    videoListContainer.innerHTML = '';
+    
+    Object.entries(videos).forEach(([id, video]) => {
+      const videoElement = document.createElement('div');
+      videoElement.className = 'video-item';
+      videoElement.innerHTML = `
+        <img src="${video.thumbnail || 'imgs/placeholder.jpg'}" alt="Video thumbnail">
+        <div class="video-info">
+          <h3>${video.title || 'Untitled Video'}</h3>
+          <p>${video.channelName || 'Unknown Channel'}</p>
+          <p>${video.views || 0} views</p>
+          <p>${video.uploadTime ? new Date(video.uploadTime).toLocaleDateString() : 'Unknown date'}</p>
+        </div>
+      `;
+      videoListContainer.appendChild(videoElement);
     });
+  } catch (error) {
+    console.error('Error loading videos:', error);
+    // Show error message to user
+    document.getElementById('video-list-container').innerHTML = `
+      <div class="error-message">Failed to load videos. Please try again later.</div>
+    `;
+  }
+});
     </script>
 <body>
     <div class="container">
