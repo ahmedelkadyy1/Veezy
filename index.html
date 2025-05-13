@@ -3,30 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="shortcut icon" href="imgs/logo.png" type="image/x-icon">
+    <link rel="shortcut icon" href="Untitled_design__2_-removebg-preview.png" type="image/x-icon">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/boxicons@latest/css/boxicons.min.css">
     <link rel="stylesheet" href="style.css">
     <title>Veezy</title>
 </head>
+<script>
+    document.addEventListener('DOMContentLoaded', async () => {
+        try {
+            const response = await fetch('https://veezy-backend.onrender.com/videos');
+            if (!response.ok) throw new Error('Failed to fetch videos');
+            
+            const videos = await response.json();
+            const videoListContainer = document.getElementById('video-list-container');
+            
+            // Clear existing content
+            videoListContainer.innerHTML = '';
+            
+            // Add each video to the page
+            Object.entries(videos).forEach(([id, video]) => {
+                const videoElement = document.createElement('div');
+                videoElement.className = 'video-item';
+                videoElement.innerHTML = `
+                    <img src="https://veezy-backend.onrender.com/uploads/thumbnails/${video.thumbnail}" alt="${video.title}">
+                    <h3>${video.title}</h3>
+                    <p>${video.channelName}</p>
+                    <p>${video.views} views</p>
+                `;
+                videoListContainer.appendChild(videoElement);
+            });
+        } catch (error) {
+            console.error('Error loading videos:', error);
+        }
+    });
+    </script>
 <body>
     <div class="container">
         <header>
             <nav class="navbar">
                 <div class="nav-section nav-left">
-                    <button class="nav-button menu-button"><i class='bx bx-menu'></i></button>
+                    <button class="nav-button menu-button">
+                        <i class='bx bx-menu'></i>
+                    </button>
                     <a href="#" class="nav-logo">
-                        <img src="imgs/logo.png" class="logo-image">
+                        <img src="imgs/Untitled_design__2_-removebg-preview.png" class="logo-image">
                         <h2 class="logo-text">Veezy</h2>
                     </a>
                 </div>
                 <div class="nav-section nav-center">
-                    <form class="search-form">
-                        <input type="search" placeholder="Search" class="search-input">
-                        <button class="nav-button search-button"><i class='bx bx-search-alt-2'></i></button>
+                    <form action="#" class="search-form">
+                        <input type="search" placeholder="search" required class="search-input">
+                        <button class="nav-button search-button">
+                            <i class='bx bx-search-alt-2'></i>
+                        </button>
                     </form>
+                    <button class="nav-button mic-button">
+                        <i class='bx bxs-microphone'></i>
+                    </button>
                 </div>
                 <div class="nav-section nav-right">
-                    <button class="nav-button theme-button"><i class='bx bx-moon'></i></button>
+                    <button class="nav-button theme-button">
+                        <i class='bx bx-moon'></i>
+                    </button>
                     <img src="imgs/user.jpg" class="user-image">
                 </div>
             </nav>
@@ -36,15 +74,26 @@
             <aside class="sidebar">Sidebar</aside>
             <div class="content-wrapper">
                 <div class="category-container">
-                    <div class="category-list" id="categories"></div>
+                    <div class="category-list">
+                        <button class="category-button">All</button>
+                        <button class="category-button">Websites</button>
+                        <button class="category-button">Music</button>
+                        <button class="category-button">HTML</button>
+                        <button class="category-button">CSS</button>
+                        <button class="category-button">Javascript</button>
+                        <button class="category-button">Bootstrap</button>
+                        <button class="category-button">Web devolopment</button>
+                        <button class="category-button">Web design</button>
+                        <button class="category-button">Other</button>
+                    </div>
                 </div>
-                <div class="video-list" id="video-container"></div>
+                
+                <div class="video-list" id="video-list-container">
+                    <!-- Videos will be loaded here by JavaScript -->
+                </div>
             </div>
         </main>
     </div>
-
-    <script>
-       
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>
